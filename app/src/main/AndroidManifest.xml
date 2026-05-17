@@ -7,6 +7,10 @@
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <permission
+        android:name="com.example.stockwidget.READ_WATCHLIST"
+        android:protectionLevel="signature" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -54,6 +58,12 @@
             android:name=".OutlookActivity"
             android:exported="false"
             android:theme="@style/Theme.StockWidget" />
+
+        <provider
+            android:name=".WatchlistProvider"
+            android:authorities="com.example.stockwidget.watchlist"
+            android:exported="true"
+            android:readPermission="com.example.stockwidget.READ_WATCHLIST" />
 
     </application>
 
