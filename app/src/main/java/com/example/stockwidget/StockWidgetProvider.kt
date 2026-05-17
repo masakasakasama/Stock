@@ -32,9 +32,6 @@ class StockWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        for (id in appWidgetIds) StockPrefs.delete(context, id)
-    }
 
     private fun refresh(
         context: Context,
@@ -54,8 +51,8 @@ class StockWidgetProvider : AppWidgetProvider() {
         val appCtx = context.applicationContext
         Thread {
             try {
+                val symbols = StockPrefs.loadAppSymbols(appCtx)
                 for (id in ids) {
-                    val symbols = StockPrefs.loadSymbols(appCtx, id)
                     val quotes = symbols.map { YahooFinanceClient.fetch(it) }
                     val rv = baseViews(appCtx)
                     rv.removeAllViews(R.id.widget_rows)
@@ -82,14 +79,22 @@ class StockWidgetProvider : AppWidgetProvider() {
         val refreshIntent = Intent(context, StockWidgetProvider::class.java).apply {
             action = ACTION_REFRESH
         }
-        val pending = PendingIntent.getBroadcast(
+        val refreshPending = PendingIntent.getBroadcast(
             context,
             0,
             refreshIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        rv.setOnClickPendingIntent(R.id.widget_refresh, pending)
-        rv.setOnClickPendingIntent(R.id.widget_title, pending)
+        rv.setOnClickPendingIntent(R.id.widget_refresh, refreshPending)
+
+        val openApp = PendingIntent.getActivity(
+            context,
+            1,
+            Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        rv.setOnClickPendingIntent(R.id.widget_title, openApp)
         return rv
     }
 
@@ -115,16 +120,5 @@ class StockWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val ACTION_REFRESH = "com.example.stockwidget.ACTION_REFRESH"
-
-        fun updateWidget(
-            context: Context,
-            appWidgetManager: AppWidgetManager,
-            appWidgetId: Int
-        ) {
-            val intent = Intent(context, StockWidgetProvider::class.java).apply {
-                action = ACTION_REFRESH
-            }
-            context.sendBroadcast(intent)
-        }
     }
 }

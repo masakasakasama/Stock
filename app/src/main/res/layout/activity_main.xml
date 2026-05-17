@@ -83,10 +83,26 @@
                 android:layout_marginTop="20dp"
                 android:text="@string/edit_watchlist" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/add_widget_button"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/add_widget" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/diagnose_button"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/diagnose_widget" />
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="14dp"
                 android:text="@string/widget_howto"
                 android:textColor="#99FFFFFF"
                 android:textSize="12sp" />

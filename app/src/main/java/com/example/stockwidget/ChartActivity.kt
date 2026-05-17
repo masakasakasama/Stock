@@ -80,7 +80,7 @@ class ChartActivity : AppCompatActivity() {
     private fun loadSeries() {
         binding.chartStatus.visibility = View.VISIBLE
         binding.chartStatus.text = getString(R.string.loading_label)
-        binding.chartView.setValues(emptyList())
+        binding.chartView.setData(emptyList(), emptyList())
         val range = selected
         Thread {
             val series = YahooFinanceClient.fetchSeries(symbol, range)
@@ -88,7 +88,7 @@ class ChartActivity : AppCompatActivity() {
                 if (isFinishing || isDestroyed || range != selected) return@runOnUiThread
                 if (series.closes.size >= 2) {
                     binding.chartStatus.visibility = View.GONE
-                    binding.chartView.setValues(series.closes)
+                    binding.chartView.setData(series.closes, series.times)
                 } else {
                     binding.chartStatus.visibility = View.VISIBLE
                     binding.chartStatus.text = getString(

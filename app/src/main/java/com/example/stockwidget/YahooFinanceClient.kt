@@ -83,11 +83,16 @@ object YahooFinanceClient {
         FIVE_YEAR("5年", "5y", "1wk")
     }
 
-    data class Series(val closes: List<Double>, val currency: String, val error: String? = null)
+    data class Series(
+        val closes: List<Double>,
+        val times: List<Long>,
+        val currency: String,
+        val error: String? = null
+    )
 
     fun fetchSeries(symbol: String, r: ChartRange): Series {
         val trimmed = symbol.trim()
-        if (trimmed.isEmpty()) return Series(emptyList(), "", "empty")
+        if (trimmed.isEmpty()) return Series(emptyList(), emptyList(), "", "empty")
         return try {
             val encoded = URLEncoder.encode(trimmed, "UTF-8")
             val url = URL("$BASE$encoded?range=${r.range}&interval=${r.interval}")
@@ -100,7 +105,7 @@ object YahooFinanceClient {
             }
             try {
                 if (conn.responseCode != 200) {
-                    return Series(emptyList(), "", "HTTP ${conn.responseCode}")
+                    return Series(emptyList(), emptyList(), "", "HTTP ${conn.responseCode}")
                 }
                 val body = conn.inputStream.bufferedReader().use { it.readText() }
                 parseSeries(body)
@@ -108,31 +113,38 @@ object YahooFinanceClient {
                 conn.disconnect()
             }
         } catch (e: Exception) {
-            Series(emptyList(), "", e.message ?: "network error")
+            Series(emptyList(), emptyList(), "", e.message ?: "network error")
         }
     }
 
     private fun parseSeries(body: String): Series {
         val chart = JSONObject(body).getJSONObject("chart")
-        if (!chart.isNull("error")) return Series(emptyList(), "", "not found")
+        if (!chart.isNull("error")) return Series(emptyList(), emptyList(), "", "not found")
         val results = chart.optJSONArray("result")
-        if (results == null || results.length() == 0) return Series(emptyList(), "", "no data")
+        if (results == null || results.length() == 0) {
+            return Series(emptyList(), emptyList(), "", "no data")
+        }
         val result = results.getJSONObject(0)
         val currency = result.optJSONObject("meta")?.optString("currency", "") ?: ""
+        val timeArray = result.optJSONArray("timestamp")
         val closeArray = result
             .optJSONObject("indicators")
             ?.optJSONArray("quote")
             ?.optJSONObject(0)
             ?.optJSONArray("close")
-            ?: return Series(emptyList(), currency, "no data")
+            ?: return Series(emptyList(), emptyList(), currency, "no data")
 
         val closes = ArrayList<Double>(closeArray.length())
+        val times = ArrayList<Long>(closeArray.length())
         for (i in 0 until closeArray.length()) {
             if (!closeArray.isNull(i)) {
                 val v = closeArray.optDouble(i, Double.NaN)
-                if (!v.isNaN()) closes.add(v)
+                if (!v.isNaN()) {
+                    closes.add(v)
+                    times.add(timeArray?.optLong(i, 0L) ?: 0L)
+                }
             }
         }
-        return Series(closes, currency)
+        return Series(closes, times, currency)
     }
 }

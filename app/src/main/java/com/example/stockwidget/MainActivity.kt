@@ -1,7 +1,9 @@
 package com.example.stockwidget
 
 import android.Manifest
+import android.appwidget.AppWidgetManager
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -12,9 +14,12 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.RemoteViews
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.stockwidget.databinding.ActivityMainBinding
@@ -69,6 +74,8 @@ class MainActivity : AppCompatActivity() {
         binding.editButton.setOnClickListener {
             startActivity(Intent(this, WatchlistEditActivity::class.java))
         }
+        binding.addWidgetButton.setOnClickListener { pinWidget() }
+        binding.diagnoseButton.setOnClickListener { diagnoseWidget() }
         binding.autoupdateButton.setOnClickListener { openInstallPermission() }
         binding.checkUpdateButton.setOnClickListener {
             binding.updateLog.text = getString(R.string.checking_update)
@@ -173,6 +180,59 @@ class MainActivity : AppCompatActivity() {
             }
             container.addView(row)
         }
+    }
+
+    private fun pinWidget() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            Toast.makeText(this, R.string.pin_unsupported, Toast.LENGTH_LONG).show()
+            return
+        }
+        val mgr = AppWidgetManager.getInstance(this)
+        val provider = ComponentName(this, StockWidgetProvider::class.java)
+        if (mgr.isRequestPinAppWidgetSupported) {
+            mgr.requestPinAppWidget(provider, null, null)
+        } else {
+            Toast.makeText(this, R.string.pin_unsupported, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    /** Reproduces what the launcher does so the real error is visible. */
+    private fun diagnoseWidget() {
+        val result = try {
+            val rv = RemoteViews(packageName, R.layout.stock_widget)
+            rv.setTextViewText(R.id.widget_title, getString(R.string.widget_title))
+            rv.setTextViewText(R.id.widget_status, "diagnose")
+            val sample = StockQuote("TEST", "Diagnostic", 100.0, 99.0, "USD")
+            val row = RemoteViews(packageName, R.layout.stock_widget_item)
+            row.setTextViewText(R.id.item_symbol, sample.symbol)
+            row.setTextViewText(R.id.item_name, sample.shortName)
+            row.setTextViewText(R.id.item_price, sample.formattedPrice())
+            row.setTextViewText(R.id.item_change, sample.formattedChange())
+            rv.addView(R.id.widget_rows, row)
+            rv.apply(applicationContext, FrameLayout(this))
+            getString(R.string.diagnose_ok)
+        } catch (t: Throwable) {
+            buildString {
+                append(t.javaClass.name).append('\n')
+                append(t.message ?: "").append("\n\n")
+                t.stackTrace.take(12).forEach { append(it.toString()).append('\n') }
+                t.cause?.let {
+                    append("\nCause: ").append(it.javaClass.name).append('\n')
+                    append(it.message ?: "")
+                }
+            }
+        }
+        val tv = TextView(this).apply {
+            text = result
+            setTextIsSelectable(true)
+            setPadding(48, 32, 48, 32)
+            textSize = 12f
+        }
+        AlertDialog.Builder(this)
+            .setTitle("ウィジェット診断結果")
+            .setView(tv)
+            .setPositiveButton("OK", null)
+            .show()
     }
 
     private fun canSelfInstall(): Boolean =

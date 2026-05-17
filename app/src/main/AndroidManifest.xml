@@ -50,15 +50,6 @@
             android:exported="false"
             android:theme="@style/Theme.StockWidget" />
 
-        <activity
-            android:name=".StockWidgetConfigureActivity"
-            android:exported="true"
-            android:theme="@style/Theme.StockWidget">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
-            </intent-filter>
-        </activity>
-
     </application>
 
 </manifest>

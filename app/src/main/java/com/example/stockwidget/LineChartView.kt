@@ -8,6 +8,9 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.roundToInt
 
 /** Minimal line chart with a tap/drag crosshair, drawn with Canvas. */
@@ -17,6 +20,7 @@ class LineChartView @JvmOverloads constructor(
 ) : View(context, attrs) {
 
     private var values: List<Double> = emptyList()
+    private var times: List<Long> = emptyList()
     private var selected = -1
 
     private var chartLeft = 0f
@@ -54,10 +58,24 @@ class LineChartView @JvmOverloads constructor(
         isFakeBoldText = true
     }
 
-    fun setValues(v: List<Double>) {
+    fun setData(v: List<Double>, t: List<Long>) {
         values = v
+        times = t
         selected = -1
         invalidate()
+    }
+
+    private fun dateLabel(epochSec: Long): String {
+        if (epochSec <= 0L) return ""
+        val spanDays = if (times.size >= 2)
+            (times.last() - times.first()) / 86400.0 else 0.0
+        val pattern = when {
+            spanDays <= 10 -> "M/d HH:mm"
+            spanDays <= 400 -> "M/d"
+            else -> "yyyy/M"
+        }
+        return SimpleDateFormat(pattern, Locale.getDefault())
+            .format(Date(epochSec * 1000))
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -83,9 +101,10 @@ class LineChartView @JvmOverloads constructor(
 
         val padL = 16f
         val padR = 96f
-        val padV = 24f
+        val padTop = 24f
+        val padBottom = 52f
         val w = width - padL - padR
-        val h = height - padV * 2
+        val h = height - padTop - padBottom
         if (w <= 0 || h <= 0) return
         chartLeft = padL
         chartRight = padL + w
@@ -95,7 +114,7 @@ class LineChartView @JvmOverloads constructor(
         val sp = (max - min).let { if (it == 0.0) 1.0 else it }
 
         fun x(i: Int) = padL + w * i / (data.size - 1)
-        fun y(value: Double) = padV + (h - (h * ((value - min) / sp))).toFloat()
+        fun y(value: Double) = padTop + (h - (h * ((value - min) / sp))).toFloat()
 
         listOf(max, (max + min) / 2, min).forEach { level ->
             val yy = y(level)
@@ -108,40 +127,59 @@ class LineChartView @JvmOverloads constructor(
         linePaint.color = color
         dotPaint.color = color
 
+        val bottomY = padTop + h
         val line = Path()
         val area = Path()
         for (i in data.indices) {
             val px = x(i)
             val py = y(data[i])
             if (i == 0) {
-                line.moveTo(px, py); area.moveTo(px, padV + h); area.lineTo(px, py)
+                line.moveTo(px, py); area.moveTo(px, bottomY); area.lineTo(px, py)
             } else {
                 line.lineTo(px, py); area.lineTo(px, py)
             }
         }
-        area.lineTo(x(data.size - 1), padV + h)
+        area.lineTo(x(data.size - 1), bottomY)
         area.close()
         fillPaint.color = (color and 0x00FFFFFF) or 0x22000000
         canvas.drawPath(area, fillPaint)
         canvas.drawPath(line, linePaint)
 
+        // Start / end date labels along the bottom.
+        if (times.size == data.size && times.isNotEmpty()) {
+            val startL = dateLabel(times.first())
+            val endL = dateLabel(times.last())
+            canvas.drawText(startL, padL, bottomY + 38f, textPaint)
+            val ew = textPaint.measureText(endL)
+            canvas.drawText(endL, padL + w - ew, bottomY + 38f, textPaint)
+        }
+
         if (selected in data.indices) {
             val sx = x(selected)
             val sy = y(data[selected])
-            canvas.drawLine(sx, padV, sx, padV + h, crosshairPaint)
+            canvas.drawLine(sx, padTop, sx, bottomY, crosshairPaint)
             canvas.drawCircle(sx, sy, 9f, dotPaint)
 
-            val label = fmt(data[selected])
-            val tw = bubbleText.measureText(label)
-            val bw = tw + 28f
-            val bh = 56f
-            var bx = sx - bw / 2
-            bx = bx.coerceIn(padL, padL + w - bw)
-            val by = padV
+            val priceLabel = fmt(data[selected])
+            val pw = bubbleText.measureText(priceLabel)
+            val pbw = pw + 28f
+            var pbx = (sx - pbw / 2).coerceIn(padL, padL + w - pbw)
             canvas.drawRoundRect(
-                RectF(bx, by, bx + bw, by + bh), 12f, 12f, bubblePaint
+                RectF(pbx, padTop, pbx + pbw, padTop + 56f), 12f, 12f, bubblePaint
             )
-            canvas.drawText(label, bx + 14f, by + 38f, bubbleText)
+            canvas.drawText(priceLabel, pbx + 14f, padTop + 38f, bubbleText)
+
+            val dateL = if (selected < times.size) dateLabel(times[selected]) else ""
+            if (dateL.isNotEmpty()) {
+                val dw = bubbleText.measureText(dateL)
+                val dbw = dw + 28f
+                val dbx = (sx - dbw / 2).coerceIn(padL, padL + w - dbw)
+                canvas.drawRoundRect(
+                    RectF(dbx, bottomY + 4f, dbx + dbw, bottomY + 52f),
+                    12f, 12f, bubblePaint
+                )
+                canvas.drawText(dateL, dbx + 14f, bottomY + 38f, bubbleText)
+            }
         }
     }
 
