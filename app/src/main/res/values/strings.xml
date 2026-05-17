@@ -2,6 +2,7 @@
     <string name="app_name">株価ウィジェット</string>
     <string name="widget_title">株価</string>
     <string name="refresh">更新</string>
+    <string name="loading_label">読み込み中…</string>
     <string name="empty_hint">銘柄が設定されていません。\nウィジェットを長押し →設定で銘柄を追加してください。</string>
     <string name="config_title">株価ウィジェットの設定</string>
     <string name="config_help">表示したい項目にチェックを入れてください。おすすめは最初からオンになっています。</string>

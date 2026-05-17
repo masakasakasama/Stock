@@ -26,11 +26,6 @@
                 android:resource="@xml/stock_widget_info" />
         </receiver>
 
-        <service
-            android:name=".StockRemoteViewsService"
-            android:permission="android.permission.BIND_REMOTEVIEWS"
-            android:exported="false" />
-
         <receiver
             android:name=".InstallResultReceiver"
             android:exported="false" />

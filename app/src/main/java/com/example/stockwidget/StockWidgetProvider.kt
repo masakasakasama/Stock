@@ -6,7 +6,8 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import android.graphics.Color
+import android.view.View
 import android.widget.RemoteViews
 
 class StockWidgetProvider : AppWidgetProvider() {
@@ -17,9 +18,7 @@ class StockWidgetProvider : AppWidgetProvider() {
         appWidgetIds: IntArray
     ) {
         AppUpdater.maybeCheck(context)
-        for (id in appWidgetIds) {
-            updateWidget(context, appWidgetManager, id)
-        }
+        refresh(context, appWidgetManager, appWidgetIds)
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -29,13 +28,89 @@ class StockWidgetProvider : AppWidgetProvider() {
             val ids = mgr.getAppWidgetIds(
                 ComponentName(context, StockWidgetProvider::class.java)
             )
-            mgr.notifyAppWidgetViewDataChanged(ids, R.id.widget_list)
-            for (id in ids) updateWidget(context, mgr, id)
+            if (ids.isNotEmpty()) refresh(context, mgr, ids)
         }
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         for (id in appWidgetIds) StockPrefs.delete(context, id)
+    }
+
+    private fun refresh(
+        context: Context,
+        mgr: AppWidgetManager,
+        ids: IntArray
+    ) {
+        // Show a valid layout immediately so the launcher can place the widget.
+        for (id in ids) {
+            val rv = baseViews(context)
+            rv.removeAllViews(R.id.widget_rows)
+            rv.setViewVisibility(R.id.widget_status, View.VISIBLE)
+            rv.setTextViewText(R.id.widget_status, context.getString(R.string.loading_label))
+            mgr.updateAppWidget(id, rv)
+        }
+
+        val pending = goAsync()
+        val appCtx = context.applicationContext
+        Thread {
+            try {
+                for (id in ids) {
+                    val symbols = StockPrefs.loadSymbols(appCtx, id)
+                    val quotes = symbols.map { YahooFinanceClient.fetch(it) }
+                    val rv = baseViews(appCtx)
+                    rv.removeAllViews(R.id.widget_rows)
+                    if (quotes.isEmpty()) {
+                        rv.setViewVisibility(R.id.widget_status, View.VISIBLE)
+                        rv.setTextViewText(
+                            R.id.widget_status,
+                            appCtx.getString(R.string.empty_hint)
+                        )
+                    } else {
+                        rv.setViewVisibility(R.id.widget_status, View.GONE)
+                        for (q in quotes) rv.addView(R.id.widget_rows, rowViews(appCtx, q))
+                    }
+                    mgr.updateAppWidget(id, rv)
+                }
+            } finally {
+                pending.finish()
+            }
+        }.start()
+    }
+
+    private fun baseViews(context: Context): RemoteViews {
+        val rv = RemoteViews(context.packageName, R.layout.stock_widget)
+        val refreshIntent = Intent(context, StockWidgetProvider::class.java).apply {
+            action = ACTION_REFRESH
+        }
+        val pending = PendingIntent.getBroadcast(
+            context,
+            0,
+            refreshIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        rv.setOnClickPendingIntent(R.id.widget_refresh, pending)
+        rv.setOnClickPendingIntent(R.id.widget_title, pending)
+        return rv
+    }
+
+    private fun rowViews(context: Context, q: StockQuote): RemoteViews {
+        val row = RemoteViews(context.packageName, R.layout.stock_widget_item)
+        row.setTextViewText(R.id.item_symbol, q.symbol)
+        if (q.error != null) {
+            row.setTextViewText(R.id.item_name, context.getString(R.string.error_label, q.error))
+            row.setTextViewText(R.id.item_price, "--")
+            row.setTextViewText(R.id.item_change, "")
+            row.setTextColor(R.id.item_change, Color.GRAY)
+        } else {
+            row.setTextViewText(R.id.item_name, q.shortName)
+            row.setTextViewText(R.id.item_price, q.formattedPrice())
+            row.setTextViewText(R.id.item_change, q.formattedChange())
+            row.setTextColor(
+                R.id.item_change,
+                if (q.isUp) StockQuote.COLOR_UP else StockQuote.COLOR_DOWN
+            )
+        }
+        return row
     }
 
     companion object {
@@ -46,30 +121,10 @@ class StockWidgetProvider : AppWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int
         ) {
-            val views = RemoteViews(context.packageName, R.layout.stock_widget)
-
-            val serviceIntent = Intent(context, StockRemoteViewsService::class.java).apply {
-                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                // Make the intent unique per widget so each list is independent.
-                data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
-            }
-            views.setRemoteAdapter(R.id.widget_list, serviceIntent)
-            views.setEmptyView(R.id.widget_list, R.id.widget_empty)
-
-            val refreshIntent = Intent(context, StockWidgetProvider::class.java).apply {
+            val intent = Intent(context, StockWidgetProvider::class.java).apply {
                 action = ACTION_REFRESH
             }
-            val refreshPending = PendingIntent.getBroadcast(
-                context,
-                appWidgetId,
-                refreshIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending)
-            views.setOnClickPendingIntent(R.id.widget_title, refreshPending)
-
-            appWidgetManager.updateAppWidget(appWidgetId, views)
-            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_list)
+            context.sendBroadcast(intent)
         }
     }
 }

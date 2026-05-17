@@ -24,8 +24,8 @@
 
         <ImageView
             android:id="@+id/widget_refresh"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:src="@drawable/ic_refresh"
             android:contentDescription="@string/refresh" />
     </LinearLayout>
@@ -37,21 +37,24 @@
         android:layout_marginBottom="4dp"
         android:background="#33FFFFFF" />
 
-    <ListView
-        android:id="@+id/widget_list"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:divider="#22FFFFFF"
-        android:dividerHeight="1dp" />
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:id="@+id/widget_rows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
 
     <TextView
-        android:id="@+id/widget_empty"
+        android:id="@+id/widget_status"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="@string/empty_hint"
+        android:padding="12dp"
         android:textColor="#CCFFFFFF"
         android:textSize="12sp" />
 
