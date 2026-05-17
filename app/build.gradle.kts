@@ -15,9 +15,25 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        // Fixed key checked into the repo so every CI build is signed
+        // identically and updates install over the previous version.
+        // This is a throwaway key for personal sideloading only.
+        create("shared") {
+            storeFile = file("keystore/shared-debug.jks")
+            storePassword = "stockwidget"
+            keyAlias = "stockwidget"
+            keyPassword = "stockwidget"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("shared")
+        }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("shared")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
