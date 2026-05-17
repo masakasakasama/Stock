@@ -26,6 +26,17 @@
     <string name="updated_at">最終更新 %1$s</string>
     <string name="version_format">バージョン %1$s (ビルド %2$d)</string>
     <string name="tap_for_chart">銘柄をタップすると期間別チャートを表示します。</string>
+    <string name="outlook_open">AI市況・見通し</string>
+    <string name="outlook_title">AI市況・見通し</string>
+    <string name="outlook_help">Claude が最新ニュースを検索し、ウォッチ銘柄を踏まえて日/週/月/半年/1年/3年の見通しを生成します。Anthropic の API キーが必要です（端末内のみ保存）。</string>
+    <string name="api_key_hint">Anthropic API キー (sk-ant-...)</string>
+    <string name="save_api_key">APIキーを保存</string>
+    <string name="api_key_saved">APIキーを保存しました</string>
+    <string name="api_key_missing">APIキーを入力してください</string>
+    <string name="generate_outlook">今日の見通しを生成</string>
+    <string name="outlook_generating">生成中…（最新ニュース検索のため30〜90秒かかることがあります）</string>
+    <string name="outlook_generated_at">生成: %1$s</string>
+    <string name="outlook_error">生成に失敗しました: %1$s</string>
     <string name="add_widget">ホーム画面にウィジェットを追加</string>
     <string name="diagnose_widget">ウィジェット診断（エラーを表示）</string>
     <string name="diagnose_ok">診断OK: ウィジェットの描画に成功しました。ホーム画面に追加できます。</string>

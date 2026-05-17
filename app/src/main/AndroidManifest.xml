@@ -50,6 +50,11 @@
             android:exported="false"
             android:theme="@style/Theme.StockWidget" />
 
+        <activity
+            android:name=".OutlookActivity"
+            android:exported="false"
+            android:theme="@style/Theme.StockWidget" />
+
     </application>
 
 </manifest>

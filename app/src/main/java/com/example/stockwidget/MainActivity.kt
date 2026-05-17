@@ -71,6 +71,9 @@ class MainActivity : AppCompatActivity() {
         )
 
         binding.refreshButton.setOnClickListener { loadQuotes() }
+        binding.outlookButton.setOnClickListener {
+            startActivity(Intent(this, OutlookActivity::class.java))
+        }
         binding.editButton.setOnClickListener {
             startActivity(Intent(this, WatchlistEditActivity::class.java))
         }

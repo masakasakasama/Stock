@@ -40,4 +40,27 @@ object StockPrefs {
             .remove(KEY_PREFIX + appWidgetId)
             .apply()
     }
+
+    private const val KEY_API = "anthropic_api_key"
+    private const val KEY_OUTLOOK = "outlook_text"
+    private const val KEY_OUTLOOK_DATE = "outlook_date"
+
+    private fun prefs(context: Context) =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    fun saveApiKey(context: Context, key: String) =
+        prefs(context).edit().putString(KEY_API, key.trim()).apply()
+
+    fun loadApiKey(context: Context): String =
+        prefs(context).getString(KEY_API, "") ?: ""
+
+    fun saveOutlook(context: Context, text: String, date: String) =
+        prefs(context).edit()
+            .putString(KEY_OUTLOOK, text)
+            .putString(KEY_OUTLOOK_DATE, date)
+            .apply()
+
+    fun loadOutlook(context: Context): Pair<String, String> =
+        (prefs(context).getString(KEY_OUTLOOK, "") ?: "") to
+            (prefs(context).getString(KEY_OUTLOOK_DATE, "") ?: "")
 }
