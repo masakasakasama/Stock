@@ -4,9 +4,10 @@
     <string name="refresh">更新</string>
     <string name="empty_hint">銘柄が設定されていません。\nウィジェットを長押し →設定で銘柄を追加してください。</string>
     <string name="config_title">株価ウィジェットの設定</string>
-    <string name="config_help">表示したい銘柄コードをカンマ区切りで入力してください。Yahoo Finance のティッカーを使用します。</string>
+    <string name="config_help">表示したい項目にチェックを入れてください。おすすめは最初からオンになっています。</string>
+    <string name="custom_label">その他の銘柄を追加（任意）</string>
     <string name="symbols_hint">銘柄コード (カンマ区切り)</string>
-    <string name="config_examples">例: 7203.T, 6758.T, AAPL, TSLA, ^N225\n日本株は「証券コード.T」(例: トヨタ = 7203.T)、米国株はティッカー (例: AAPL)。</string>
+    <string name="config_examples">一覧にない銘柄を追加したいときだけ入力。例: 7203.T, AAPL\n日本株は「証券コード.T」(例: トヨタ = 7203.T)、米国株はティッカー (例: AAPL)。</string>
     <string name="save">保存</string>
     <string name="error_label">取得失敗: %1$s</string>
 </resources>

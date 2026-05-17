@@ -4,6 +4,11 @@ import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
+import android.util.TypedValue
+import android.view.Gravity
+import android.widget.CheckBox
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.stockwidget.databinding.ActivityStockWidgetConfigureBinding
 
@@ -12,10 +17,10 @@ class StockWidgetConfigureActivity : AppCompatActivity() {
     private lateinit var binding: ActivityStockWidgetConfigureBinding
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
 
+    private val checkBoxes = mutableMapOf<String, CheckBox>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // If the user backs out, leave the widget uninstalled.
         setResult(Activity.RESULT_CANCELED)
 
         binding = ActivityStockWidgetConfigureBinding.inflate(layoutInflater)
@@ -31,13 +36,66 @@ class StockWidgetConfigureActivity : AppCompatActivity() {
             return
         }
 
-        binding.symbolsInput.setText(StockPrefs.loadRaw(this, appWidgetId))
+        val saved = StockPrefs.loadSymbols(this, appWidgetId)
+        // First-time setup (nothing saved yet) starts from the recommended set.
+        val selected = if (saved.isEmpty()) StockCatalog.defaults else saved
+
+        buildCheckboxes(selected.toSet())
+
+        // Symbols that don't match any preset go into the free-text field.
+        val knownSymbols = StockCatalog.all.map { it.symbol }.toSet()
+        val custom = selected.filter { it !in knownSymbols }
+        binding.symbolsInput.setText(custom.joinToString(", "))
+
         binding.saveButton.setOnClickListener { save() }
     }
 
+    private fun buildCheckboxes(selected: Set<String>) {
+        val container = binding.presetsContainer
+        for ((groupName, presets) in StockCatalog.groups) {
+            container.addView(makeHeader(groupName))
+            for (preset in presets) {
+                val cb = CheckBox(this).apply {
+                    text = "${preset.label}  (${preset.symbol})"
+                    isChecked = preset.symbol in selected
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                }
+                checkBoxes[preset.symbol] = cb
+                container.addView(cb)
+            }
+        }
+    }
+
+    private fun makeHeader(title: String): TextView = TextView(this).apply {
+        text = title
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+        gravity = Gravity.START
+        setPadding(0, dp(16), 0, dp(4))
+        setTypeface(typeface, android.graphics.Typeface.BOLD)
+    }
+
+    private fun dp(value: Int): Int =
+        (value * resources.displayMetrics.density).toInt()
+
     private fun save() {
-        val raw = binding.symbolsInput.text?.toString().orEmpty().trim()
-        StockPrefs.saveSymbols(this, appWidgetId, raw)
+        val fromCheckboxes = StockCatalog.all
+            .map { it.symbol }
+            .filter { checkBoxes[it]?.isChecked == true }
+
+        val fromCustom = binding.symbolsInput.text?.toString().orEmpty()
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+
+        val merged = LinkedHashSet<String>().apply {
+            addAll(fromCheckboxes)
+            addAll(fromCustom)
+        }
+
+        StockPrefs.saveSymbols(this, appWidgetId, merged.joinToString(", "))
 
         val mgr = AppWidgetManager.getInstance(this)
         StockWidgetProvider.updateWidget(this, mgr, appWidgetId)
