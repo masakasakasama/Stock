@@ -158,61 +158,51 @@ class OutlookActivity : AppCompatActivity() {
     }
 
     private fun timeframeCard(scope: String, body: String): View {
-        val (v, text) = verdictOf(body)
+        val (v, detail) = verdictOf(body)
         val color = v?.color ?: Color.WHITE
         val card = card()
 
-        val header = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-        header.addView(TextView(this).apply {
-            setText(v?.arrow ?: "・")
-            setTextColor(color)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
-            setPadding(0, 0, dp(10), 0)
-        })
-        header.addView(TextView(this).apply {
-            text = scope
-            setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
-            setTypeface(typeface, Typeface.BOLD)
-        })
+        val header = LinearLayout(this)
+        header.orientation = LinearLayout.HORIZONTAL
+        header.gravity = Gravity.CENTER_VERTICAL
+
+        val arrowView = makeText(v?.arrow ?: "・", 22f, color, bold = true)
+        arrowView.setPadding(0, 0, dp(10), 0)
+        header.addView(arrowView)
+        header.addView(makeText(scope, 17f, Color.WHITE, bold = true))
         if (v != null) {
-            header.addView(TextView(this).apply {
-                text = "  ${v.label}"
-                setTextColor(color)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-                setTypeface(typeface, Typeface.BOLD)
-            })
+            header.addView(makeText("  ${v.label}", 15f, color, bold = true))
         }
         card.addView(header)
-        card.addView(TextView(this).apply {
-            this.text = text
-            setTextColor(0xFFE8EBEF.toInt())
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-            setPadding(0, dp(6), 0, 0)
-            setLineSpacing(0f, 1.2f)
-        })
+
+        val bodyView = makeText(detail, 14f, 0xFFE8EBEF.toInt())
+        bodyView.setPadding(0, dp(6), 0, 0)
+        card.addView(bodyView)
         return card
     }
 
     private fun infoCard(title: String, body: String): View {
         val card = card()
-        card.addView(TextView(this).apply {
-            text = title
-            setTextColor(0xFF1BA672.toInt())
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-            setTypeface(typeface, Typeface.BOLD)
-        })
-        card.addView(TextView(this).apply {
-            text = body
-            setTextColor(0xFFE8EBEF.toInt())
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-            setPadding(0, dp(6), 0, 0)
-            setLineSpacing(0f, 1.2f)
-        })
+        card.addView(makeText(title, 15f, 0xFF1BA672.toInt(), bold = true))
+        val bodyView = makeText(body, 14f, 0xFFE8EBEF.toInt())
+        bodyView.setPadding(0, dp(6), 0, 0)
+        card.addView(bodyView)
         return card
+    }
+
+    private fun makeText(
+        content: String,
+        sizeSp: Float,
+        colorInt: Int,
+        bold: Boolean = false
+    ): TextView {
+        val tv = TextView(this)
+        tv.text = content
+        tv.setTextColor(colorInt)
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, sizeSp)
+        tv.setLineSpacing(0f, 1.2f)
+        if (bold) tv.setTypeface(tv.typeface, Typeface.BOLD)
+        return tv
     }
 
     private fun card(): LinearLayout {
@@ -229,19 +219,16 @@ class OutlookActivity : AppCompatActivity() {
         return ll
     }
 
-    private fun disclaimer(text: String): View = TextView(this).apply {
-        this.text = text
-        setTextColor(0xFF99A3AF.toInt())
-        setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-        setPadding(0, dp(4), 0, dp(8))
+    private fun disclaimer(content: String): View {
+        val tv = makeText(content, 12f, 0xFF99A3AF.toInt())
+        tv.setPadding(0, dp(4), 0, dp(8))
+        return tv
     }
 
-    private fun plainText(text: String): View = TextView(this).apply {
-        this.text = text
-        setTextColor(Color.WHITE)
-        setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-        setTextIsSelectable(true)
-        setLineSpacing(0f, 1.2f)
+    private fun plainText(content: String): View {
+        val tv = makeText(content, 14f, Color.WHITE)
+        tv.setTextIsSelectable(true)
+        return tv
     }
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
