@@ -3,8 +3,12 @@ package com.example.stockwidget
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.TypedValue
+import android.widget.Toast
 import android.view.Gravity
 import android.widget.CheckBox
 import android.widget.LinearLayout
@@ -48,6 +52,39 @@ class StockWidgetConfigureActivity : AppCompatActivity() {
         binding.symbolsInput.setText(custom.joinToString(", "))
 
         binding.saveButton.setOnClickListener { save() }
+
+        binding.autoupdateButton.setOnClickListener { openInstallPermission() }
+        binding.checkUpdateButton.setOnClickListener {
+            AppUpdater.checkNow(this)
+            Toast.makeText(this, R.string.check_update_button, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshUpdateStatus()
+    }
+
+    private fun canSelfInstall(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+            packageManager.canRequestPackageInstalls()
+
+    private fun refreshUpdateStatus() {
+        binding.autoupdateStatus.setText(
+            if (canSelfInstall()) R.string.autoupdate_enabled
+            else R.string.autoupdate_disabled
+        )
+    }
+
+    private fun openInstallPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:$packageName")
+                )
+            )
+        }
     }
 
     private fun buildCheckboxes(selected: Set<String>) {

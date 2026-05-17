@@ -16,6 +16,7 @@ class StockWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        AppUpdater.maybeCheck(context)
         for (id in appWidgetIds) {
             updateWidget(context, appWidgetManager, id)
         }

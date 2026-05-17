@@ -10,4 +10,13 @@
     <string name="config_examples">一覧にない銘柄を追加したいときだけ入力。例: 7203.T, AAPL\n日本株は「証券コード.T」(例: トヨタ = 7203.T)、米国株はティッカー (例: AAPL)。</string>
     <string name="save">保存</string>
     <string name="error_label">取得失敗: %1$s</string>
+    <string name="update_channel">アプリの更新</string>
+    <string name="update_ready_title">株価ウィジェットの更新があります</string>
+    <string name="update_ready_body">タップしてインストールしてください</string>
+    <string name="autoupdate_label">アプリの自動更新</string>
+    <string name="autoupdate_help">下のボタンから「この提供元のアプリを許可」を一度オンにすると、以降このアプリが自動で最新版に更新されます（手動インストール不要）。</string>
+    <string name="autoupdate_enabled">状態: 有効（自動更新されます）</string>
+    <string name="autoupdate_disabled">状態: 未設定（ボタンから許可してください）</string>
+    <string name="autoupdate_button">インストール許可の設定を開く</string>
+    <string name="check_update_button">今すぐ更新を確認</string>
 </resources>

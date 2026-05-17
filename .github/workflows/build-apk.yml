@@ -34,12 +34,16 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: >
+          ./gradlew assembleDebug --no-daemon --stacktrace
+          -PversionCode=${{ github.run_number }}
+          -PversionName=1.0.${{ github.run_number }}
 
-      - name: Rename APK
+      - name: Collect release files
         run: |
           mkdir -p dist
           cp app/build/outputs/apk/debug/app-debug.apk dist/stock-widget-debug.apk
+          echo "${{ github.run_number }}" > dist/latest-version.txt
 
       - name: Upload as workflow artifact
         uses: actions/upload-artifact@v4
@@ -57,6 +61,8 @@ jobs:
             自動ビルドされた最新のデバッグ APK です。
             スマホでこのページを開き `stock-widget-debug.apk` をタップしてインストールしてください。
             （初回は「提供元不明のアプリ」許可と、Samsung Auto Blocker のオフが必要です）
-          files: dist/stock-widget-debug.apk
+          files: |
+            dist/stock-widget-debug.apk
+            dist/latest-version.txt
           prerelease: true
           make_latest: false
