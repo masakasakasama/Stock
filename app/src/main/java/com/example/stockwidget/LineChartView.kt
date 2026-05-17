@@ -4,16 +4,23 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RectF
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
+import kotlin.math.roundToInt
 
-/** Minimal line chart drawn with Canvas (no external dependency). */
+/** Minimal line chart with a tap/drag crosshair, drawn with Canvas. */
 class LineChartView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
     private var values: List<Double> = emptyList()
+    private var selected = -1
+
+    private var chartLeft = 0f
+    private var chartRight = 0f
 
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -21,9 +28,7 @@ class LineChartView @JvmOverloads constructor(
         strokeJoin = Paint.Join.ROUND
         strokeCap = Paint.Cap.ROUND
     }
-    private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
-    }
+    private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 1f
@@ -33,10 +38,42 @@ class LineChartView @JvmOverloads constructor(
         color = 0x99FFFFFF.toInt()
         textSize = 28f
     }
+    private val crosshairPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 2f
+        color = 0xCCFFFFFF.toInt()
+    }
+    private val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val bubblePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = 0xEE222B36.toInt()
+    }
+    private val bubbleText = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFFFFFFF.toInt()
+        textSize = 34f
+        isFakeBoldText = true
+    }
 
     fun setValues(v: List<Double>) {
         values = v
+        selected = -1
         invalidate()
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (values.size < 2) return false
+        when (event.action) {
+            MotionEvent.ACTION_DOWN,
+            MotionEvent.ACTION_MOVE -> {
+                parent?.requestDisallowInterceptTouchEvent(true)
+                val span = (chartRight - chartLeft).coerceAtLeast(1f)
+                val frac = ((event.x - chartLeft) / span).coerceIn(0f, 1f)
+                selected = (frac * (values.size - 1)).roundToInt()
+                invalidate()
+                return true
+            }
+        }
+        return super.onTouchEvent(event)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -50,24 +87,26 @@ class LineChartView @JvmOverloads constructor(
         val w = width - padL - padR
         val h = height - padV * 2
         if (w <= 0 || h <= 0) return
+        chartLeft = padL
+        chartRight = padL + w
 
         val min = data.minOrNull() ?: return
         val max = data.maxOrNull() ?: return
-        val span = (max - min).let { if (it == 0.0) 1.0 else it }
+        val sp = (max - min).let { if (it == 0.0) 1.0 else it }
 
         fun x(i: Int) = padL + w * i / (data.size - 1)
-        fun y(value: Double) = padV + (h - (h * ((value - min) / span))).toFloat()
+        fun y(value: Double) = padV + (h - (h * ((value - min) / sp))).toFloat()
 
-        // Horizontal grid lines + price labels (max / mid / min).
         listOf(max, (max + min) / 2, min).forEach { level ->
             val yy = y(level)
             canvas.drawLine(padL, yy, padL + w, yy, gridPaint)
-            canvas.drawText(formatLevel(level), padL + w + 8f, yy + 10f, textPaint)
+            canvas.drawText(fmt(level), padL + w + 8f, yy + 10f, textPaint)
         }
 
         val up = data.last() >= data.first()
         val color = if (up) StockQuote.COLOR_UP else StockQuote.COLOR_DOWN
         linePaint.color = color
+        dotPaint.color = color
 
         val line = Path()
         val area = Path()
@@ -75,22 +114,37 @@ class LineChartView @JvmOverloads constructor(
             val px = x(i)
             val py = y(data[i])
             if (i == 0) {
-                line.moveTo(px, py)
-                area.moveTo(px, padV + h)
-                area.lineTo(px, py)
+                line.moveTo(px, py); area.moveTo(px, padV + h); area.lineTo(px, py)
             } else {
-                line.lineTo(px, py)
-                area.lineTo(px, py)
+                line.lineTo(px, py); area.lineTo(px, py)
             }
         }
         area.lineTo(x(data.size - 1), padV + h)
         area.close()
-
         fillPaint.color = (color and 0x00FFFFFF) or 0x22000000
         canvas.drawPath(area, fillPaint)
         canvas.drawPath(line, linePaint)
+
+        if (selected in data.indices) {
+            val sx = x(selected)
+            val sy = y(data[selected])
+            canvas.drawLine(sx, padV, sx, padV + h, crosshairPaint)
+            canvas.drawCircle(sx, sy, 9f, dotPaint)
+
+            val label = fmt(data[selected])
+            val tw = bubbleText.measureText(label)
+            val bw = tw + 28f
+            val bh = 56f
+            var bx = sx - bw / 2
+            bx = bx.coerceIn(padL, padL + w - bw)
+            val by = padV
+            canvas.drawRoundRect(
+                RectF(bx, by, bx + bw, by + bh), 12f, 12f, bubblePaint
+            )
+            canvas.drawText(label, bx + 14f, by + 38f, bubbleText)
+        }
     }
 
-    private fun formatLevel(v: Double): String =
-        if (v >= 1000) String.format("%,.0f", v) else String.format("%.2f", v)
+    private fun fmt(v: Double): String =
+        if (v >= 1000) String.format("%,.2f", v) else String.format("%.4f", v)
 }
