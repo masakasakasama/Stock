@@ -66,7 +66,7 @@ object YahooFinanceClient {
         }
         val currency = meta.optString("currency", "")
         return StockQuote(
-            symbol = meta.optString("symbol", symbol),
+            symbol = symbol,
             shortName = name,
             price = price,
             previousClose = prevClose,
