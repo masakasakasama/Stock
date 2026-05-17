@@ -21,6 +21,7 @@
     <string name="autoupdate_button">インストール許可の設定を開く</string>
     <string name="check_update_button">今すぐ更新を確認</string>
     <string name="checking_update">更新を確認しています…</string>
+    <string name="update_done">更新が完了しました。アプリを開き直してください</string>
     <string name="edit_watchlist">銘柄を編集</string>
     <string name="updated_at">最終更新 %1$s</string>
     <string name="version_format">バージョン %1$s (ビルド %2$d)</string>

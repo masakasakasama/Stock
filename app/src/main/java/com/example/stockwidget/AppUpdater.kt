@@ -9,12 +9,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Self-update: checks the GitHub release for a newer build and, if the user
- * has granted "install unknown apps" to this app, downloads and installs it
- * silently via PackageInstaller (no user action on Android 12+).
- *
- * Requires the GitHub repository to be public so the release assets can be
- * downloaded without authentication.
+ * Self-update from the public GitHub release. Every step broadcasts an
+ * [ACTION_STATUS] intent so the UI can show exactly what is happening
+ * instead of failing silently.
  */
 object AppUpdater {
 
@@ -25,39 +22,83 @@ object AppUpdater {
 
     private const val PREFS = "stock_updater"
     private const val KEY_LAST_CHECK = "last_check"
-    private val MIN_INTERVAL_MS = 3L * 60 * 60 * 1000 // 3 hours
+    private const val MIN_INTERVAL_MS = 30L * 60 * 1000 // 30 min
 
     private const val UA = "StockWidget-Updater"
 
-    /** Throttled background check. Safe to call from widget updates. */
+    const val ACTION_STATUS = "com.example.stockwidget.UPDATE_STATUS"
+    const val EXTRA_STATE = "state"
+    const val EXTRA_MESSAGE = "message"
+    const val EXTRA_CONFIRM = "confirm"
+
+    const val STATE_CHECKING = "checking"
+    const val STATE_UPTODATE = "uptodate"
+    const val STATE_DOWNLOADING = "downloading"
+    const val STATE_INSTALLING = "installing"
+    const val STATE_NEED_PERMISSION = "need_permission"
+    const val STATE_CONFIRM = "confirm"
+    const val STATE_SUCCESS = "success"
+    const val STATE_ERROR = "error"
+
+    fun sendStatus(context: Context, state: String, message: String = "") {
+        val i = Intent(ACTION_STATUS)
+            .setPackage(context.packageName)
+            .putExtra(EXTRA_STATE, state)
+            .putExtra(EXTRA_MESSAGE, message)
+        context.sendBroadcast(i)
+    }
+
+    /** Throttled check used by background triggers. */
     fun maybeCheck(context: Context) {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
         if (now - prefs.getLong(KEY_LAST_CHECK, 0L) < MIN_INTERVAL_MS) return
         prefs.edit().putLong(KEY_LAST_CHECK, now).apply()
+        checkNow(context)
+    }
+
+    /** Immediate check with visible status broadcasts. */
+    fun checkNow(context: Context) {
+        val appCtx = context.applicationContext
         Thread {
-            runCatching { check(context) }
+            try {
+                check(appCtx)
+            } catch (e: Exception) {
+                sendStatus(appCtx, STATE_ERROR, e.message ?: "error")
+            }
         }.start()
     }
 
-    /** Forced immediate check (e.g. from the config screen). */
-    fun checkNow(context: Context) {
-        Thread { runCatching { check(context) } }.start()
-    }
-
     private fun check(context: Context) {
-        val latest = downloadText(VERSION_URL).trim().toIntOrNull() ?: return
-        if (latest <= BuildConfig.VERSION_CODE) return
+        sendStatus(context, STATE_CHECKING)
+        val text = downloadText(VERSION_URL).trim()
+        val latest = text.toIntOrNull()
+        if (latest == null) {
+            sendStatus(context, STATE_ERROR, "バージョン情報を取得できません")
+            return
+        }
+        if (latest <= BuildConfig.VERSION_CODE) {
+            sendStatus(context, STATE_UPTODATE, "最新です (ビルド ${BuildConfig.VERSION_CODE})")
+            return
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             !context.packageManager.canRequestPackageInstalls()
         ) {
-            // Permission not granted yet; nothing we can do silently.
+            sendStatus(
+                context, STATE_NEED_PERMISSION,
+                "新版 (ビルド $latest) があります。インストール許可が必要です"
+            )
             return
         }
 
+        sendStatus(context, STATE_DOWNLOADING, "新版 (ビルド $latest) をダウンロード中…")
         val apkBytes = downloadBytes(APK_URL)
-        if (apkBytes.isEmpty()) return
+        if (apkBytes.isEmpty()) {
+            sendStatus(context, STATE_ERROR, "ダウンロードに失敗しました")
+            return
+        }
+        sendStatus(context, STATE_INSTALLING, "インストール中…")
         installApk(context, apkBytes)
     }
 

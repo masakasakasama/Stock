@@ -15,8 +15,6 @@ class InstallResultReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1)) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
-                // Android needs an explicit confirmation (e.g. permission not
-                // granted yet). Surface it as a notification the user can tap.
                 val confirm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
                 } else {
@@ -24,6 +22,16 @@ class InstallResultReceiver : BroadcastReceiver() {
                     intent.getParcelableExtra(Intent.EXTRA_INTENT)
                 } ?: return
                 confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                // Tell the UI so a foreground screen can show the install
+                // prompt immediately.
+                context.sendBroadcast(
+                    Intent(AppUpdater.ACTION_STATUS)
+                        .setPackage(context.packageName)
+                        .putExtra(AppUpdater.EXTRA_STATE, AppUpdater.STATE_CONFIRM)
+                        .putExtra(AppUpdater.EXTRA_MESSAGE, "インストールを確認してください")
+                        .putExtra(AppUpdater.EXTRA_CONFIRM, confirm)
+                )
                 notify(
                     context,
                     context.getString(R.string.update_ready_title),
@@ -32,8 +40,15 @@ class InstallResultReceiver : BroadcastReceiver() {
                 )
             }
 
-            PackageInstaller.STATUS_SUCCESS -> {
-                // Updated silently; no notification needed.
+            PackageInstaller.STATUS_SUCCESS ->
+                AppUpdater.sendStatus(context, AppUpdater.STATE_SUCCESS, "更新が完了しました")
+
+            else -> {
+                val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
+                AppUpdater.sendStatus(
+                    context, AppUpdater.STATE_ERROR,
+                    "インストール失敗: ${msg ?: "不明なエラー"}"
+                )
             }
         }
     }

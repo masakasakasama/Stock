@@ -1,6 +1,11 @@
 package com.example.stockwidget
 
+import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -11,6 +16,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import com.example.stockwidget.databinding.ActivityMainBinding
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -19,6 +25,34 @@ import java.util.Locale
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+
+    private val statusReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val state = intent.getStringExtra(AppUpdater.EXTRA_STATE) ?: return
+            val message = intent.getStringExtra(AppUpdater.EXTRA_MESSAGE).orEmpty()
+            binding.updateLog.text = message.ifBlank { state }
+
+            if (state == AppUpdater.STATE_CONFIRM) {
+                val confirm: Intent? =
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        intent.getParcelableExtra(AppUpdater.EXTRA_CONFIRM, Intent::class.java)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        intent.getParcelableExtra(AppUpdater.EXTRA_CONFIRM)
+                    }
+                confirm?.let {
+                    it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    runCatching { startActivity(it) }
+                }
+            }
+            if (state == AppUpdater.STATE_SUCCESS) {
+                Toast.makeText(
+                    this@MainActivity,
+                    R.string.update_done, Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,18 +71,49 @@ class MainActivity : AppCompatActivity() {
         }
         binding.autoupdateButton.setOnClickListener { openInstallPermission() }
         binding.checkUpdateButton.setOnClickListener {
+            binding.updateLog.text = getString(R.string.checking_update)
             AppUpdater.checkNow(this)
-            Toast.makeText(this, R.string.checking_update, Toast.LENGTH_SHORT).show()
         }
+
+        requestNotificationPermission()
     }
 
     override fun onResume() {
         super.onResume()
+        registerStatusReceiver()
         binding.autoupdateStatus.setText(
             if (canSelfInstall()) R.string.autoupdate_enabled
             else R.string.autoupdate_disabled
         )
         loadQuotes()
+        // Check for an update every time the app is opened.
+        AppUpdater.checkNow(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        runCatching { unregisterReceiver(statusReceiver) }
+    }
+
+    private fun registerStatusReceiver() {
+        val filter = IntentFilter(AppUpdater.ACTION_STATUS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(statusReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(statusReceiver, filter)
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1
+            )
+        }
     }
 
     private fun loadQuotes() {

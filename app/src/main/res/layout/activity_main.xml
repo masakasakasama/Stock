@@ -139,6 +139,14 @@
                 android:layout_marginTop="4dp"
                 android:text="@string/check_update_button" />
 
+            <TextView
+                android:id="@+id/update_log"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="#FFD27A"
+                android:textSize="13sp" />
+
         </LinearLayout>
 
     </ScrollView>
