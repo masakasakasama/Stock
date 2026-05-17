@@ -64,19 +64,19 @@ class OutlookActivity : AppCompatActivity() {
                 append("\n上記を踏まえ、世の中の流れと相場の見通しを指定の形式で日本語で書いてください。")
             }
 
-            val result = ClaudeClient.generateOutlook(key, context)
+            val result = GeminiClient.generateOutlook(key, context)
             runOnUiThread {
                 if (isFinishing || isDestroyed) return@runOnUiThread
                 binding.outlookProgress.visibility = View.GONE
                 binding.generateButton.isEnabled = true
                 when (result) {
-                    is ClaudeClient.Result.Ok -> {
+                    is GeminiClient.Result.Ok -> {
                         binding.outlookText.text = result.text
                         binding.outlookDate.text =
                             getString(R.string.outlook_generated_at, today)
                         StockPrefs.saveOutlook(this, result.text, today)
                     }
-                    is ClaudeClient.Result.Err -> {
+                    is GeminiClient.Result.Err -> {
                         binding.outlookDate.text = ""
                         binding.outlookText.text =
                             getString(R.string.outlook_error, result.message)

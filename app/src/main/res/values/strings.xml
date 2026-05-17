@@ -28,8 +28,8 @@
     <string name="tap_for_chart">銘柄をタップすると期間別チャートを表示します。</string>
     <string name="outlook_open">AI市況・見通し</string>
     <string name="outlook_title">AI市況・見通し</string>
-    <string name="outlook_help">Claude が最新ニュースを検索し、ウォッチ銘柄を踏まえて日/週/月/半年/1年/3年の見通しを生成します。Anthropic の API キーが必要です（端末内のみ保存）。</string>
-    <string name="api_key_hint">Anthropic API キー (sk-ant-...)</string>
+    <string name="outlook_help">Google Gemini が最新ニュースを検索し、ウォッチ銘柄を踏まえて日/週/月/半年/1年/3年の見通しを生成します。Google AI Studio の無料 API キーが必要です（端末内のみ保存）。</string>
+    <string name="api_key_hint">Google AI Studio APIキー (AIza...)</string>
     <string name="save_api_key">APIキーを保存</string>
     <string name="api_key_saved">APIキーを保存しました</string>
     <string name="api_key_missing">APIキーを入力してください</string>
