@@ -36,6 +36,21 @@
             android:exported="false" />
 
         <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.StockWidget">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".WatchlistEditActivity"
+            android:exported="false"
+            android:theme="@style/Theme.StockWidget" />
+
+        <activity
             android:name=".StockWidgetConfigureActivity"
             android:exported="true"
             android:theme="@style/Theme.StockWidget">

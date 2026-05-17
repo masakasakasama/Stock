@@ -19,4 +19,9 @@
     <string name="autoupdate_disabled">状態: 未設定（ボタンから許可してください）</string>
     <string name="autoupdate_button">インストール許可の設定を開く</string>
     <string name="check_update_button">今すぐ更新を確認</string>
+    <string name="checking_update">更新を確認しています…</string>
+    <string name="edit_watchlist">銘柄を編集</string>
+    <string name="updated_at">最終更新 %1$s</string>
+    <string name="version_format">バージョン %1$s (ビルド %2$d)</string>
+    <string name="widget_howto">ホーム画面でウィジェットを追加するには: ホーム画面を長押し → ウィジェット → 「株価ウィジェット」を配置 → 銘柄を選択。\nアプリをアンインストールするには、アプリ一覧でこのアイコンを長押し → アンインストール。</string>
 </resources>

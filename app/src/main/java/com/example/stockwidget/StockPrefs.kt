@@ -8,6 +8,15 @@ object StockPrefs {
     private const val PREFS = "stock_widget_prefs"
     private const val KEY_PREFIX = "symbols_"
 
+    /** Pseudo widget id used for the in-app watchlist (real widget ids are > 0). */
+    const val APP_ID = 0
+
+    /** App watchlist, falling back to the recommended defaults when unset. */
+    fun loadAppSymbols(context: Context): List<String> {
+        val saved = loadSymbols(context, APP_ID)
+        return saved.ifEmpty { StockCatalog.defaults }
+    }
+
     fun saveSymbols(context: Context, appWidgetId: Int, raw: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit()

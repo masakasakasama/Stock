@@ -6,8 +6,6 @@ import android.content.Intent
 import android.graphics.Color
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
-import java.text.NumberFormat
-import java.util.Locale
 
 class StockRemoteViewsService : RemoteViewsService() {
     override fun onGetViewFactory(intent: Intent): RemoteViewsFactory {
@@ -58,35 +56,13 @@ private class StockRemoteViewsFactory(
         }
 
         row.setTextViewText(R.id.item_name, q.shortName)
-        row.setTextViewText(R.id.item_price, formatPrice(q.price, q.currency))
-
-        val sign = if (q.isUp) "+" else ""
-        val changeText = String.format(
-            Locale.US,
-            "%s%.2f (%s%.2f%%)",
-            sign, q.change, sign, q.changePercent
-        )
-        row.setTextViewText(R.id.item_change, changeText)
+        row.setTextViewText(R.id.item_price, q.formattedPrice())
+        row.setTextViewText(R.id.item_change, q.formattedChange())
         row.setTextColor(
             R.id.item_change,
-            if (q.isUp) Color.parseColor("#1BA672") else Color.parseColor("#E0533D")
+            if (q.isUp) StockQuote.COLOR_UP else StockQuote.COLOR_DOWN
         )
         return row
-    }
-
-    private fun formatPrice(price: Double, currency: String): String {
-        val nf = NumberFormat.getNumberInstance(Locale.US).apply {
-            maximumFractionDigits = 2
-            minimumFractionDigits = 2
-        }
-        val symbol = when (currency.uppercase(Locale.US)) {
-            "USD" -> "$"
-            "JPY" -> "¥"
-            "EUR" -> "€"
-            "GBP" -> "£"
-            else -> if (currency.isBlank()) "" else "$currency "
-        }
-        return symbol + nf.format(price)
     }
 
     override fun getLoadingView(): RemoteViews? = null

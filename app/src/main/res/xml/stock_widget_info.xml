@@ -9,4 +9,4 @@
     android:configure="com.example.stockwidget.StockWidgetConfigureActivity"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:previewLayout="@layout/stock_widget" />
+    android:previewImage="@drawable/widget_preview" />

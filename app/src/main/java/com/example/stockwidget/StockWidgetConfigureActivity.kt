@@ -7,21 +7,15 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.util.TypedValue
 import android.widget.Toast
-import android.view.Gravity
-import android.widget.CheckBox
-import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.stockwidget.databinding.ActivityStockWidgetConfigureBinding
 
 class StockWidgetConfigureActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityStockWidgetConfigureBinding
+    private lateinit var picker: SymbolPicker
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
-
-    private val checkBoxes = mutableMapOf<String, CheckBox>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +38,8 @@ class StockWidgetConfigureActivity : AppCompatActivity() {
         // First-time setup (nothing saved yet) starts from the recommended set.
         val selected = if (saved.isEmpty()) StockCatalog.defaults else saved
 
-        buildCheckboxes(selected.toSet())
+        picker = SymbolPicker(this, binding.presetsContainer)
+        picker.populate(selected.toSet())
 
         // Symbols that don't match any preset go into the free-text field.
         val knownSymbols = StockCatalog.all.map { it.symbol }.toSet()
@@ -62,19 +57,15 @@ class StockWidgetConfigureActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        refreshUpdateStatus()
-    }
-
-    private fun canSelfInstall(): Boolean =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
-            packageManager.canRequestPackageInstalls()
-
-    private fun refreshUpdateStatus() {
         binding.autoupdateStatus.setText(
             if (canSelfInstall()) R.string.autoupdate_enabled
             else R.string.autoupdate_disabled
         )
     }
+
+    private fun canSelfInstall(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+            packageManager.canRequestPackageInstalls()
 
     private fun openInstallPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -87,48 +78,14 @@ class StockWidgetConfigureActivity : AppCompatActivity() {
         }
     }
 
-    private fun buildCheckboxes(selected: Set<String>) {
-        val container = binding.presetsContainer
-        for ((groupName, presets) in StockCatalog.groups) {
-            container.addView(makeHeader(groupName))
-            for (preset in presets) {
-                val cb = CheckBox(this).apply {
-                    text = "${preset.label}  (${preset.symbol})"
-                    isChecked = preset.symbol in selected
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    )
-                }
-                checkBoxes[preset.symbol] = cb
-                container.addView(cb)
-            }
-        }
-    }
-
-    private fun makeHeader(title: String): TextView = TextView(this).apply {
-        text = title
-        setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-        gravity = Gravity.START
-        setPadding(0, dp(16), 0, dp(4))
-        setTypeface(typeface, android.graphics.Typeface.BOLD)
-    }
-
-    private fun dp(value: Int): Int =
-        (value * resources.displayMetrics.density).toInt()
-
     private fun save() {
-        val fromCheckboxes = StockCatalog.all
-            .map { it.symbol }
-            .filter { checkBoxes[it]?.isChecked == true }
-
         val fromCustom = binding.symbolsInput.text?.toString().orEmpty()
             .split(",")
             .map { it.trim() }
             .filter { it.isNotEmpty() }
 
         val merged = LinkedHashSet<String>().apply {
-            addAll(fromCheckboxes)
+            addAll(picker.checkedSymbols())
             addAll(fromCustom)
         }
 
