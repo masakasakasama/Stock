@@ -46,6 +46,11 @@
             android:theme="@style/Theme.StockWidget" />
 
         <activity
+            android:name=".ChartActivity"
+            android:exported="false"
+            android:theme="@style/Theme.StockWidget" />
+
+        <activity
             android:name=".StockWidgetConfigureActivity"
             android:exported="true"
             android:theme="@style/Theme.StockWidget">

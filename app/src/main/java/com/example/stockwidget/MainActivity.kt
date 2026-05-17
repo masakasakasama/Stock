@@ -83,6 +83,13 @@ class MainActivity : AppCompatActivity() {
         }
         for (q in quotes) {
             val row = inflater.inflate(R.layout.quote_row, container, false) as LinearLayout
+            row.setOnClickListener {
+                startActivity(
+                    Intent(this, ChartActivity::class.java)
+                        .putExtra(ChartActivity.EXTRA_SYMBOL, q.symbol)
+                        .putExtra(ChartActivity.EXTRA_NAME, q.shortName)
+                )
+            }
             row.findViewById<TextView>(R.id.row_symbol).text = q.symbol
             val priceView = row.findViewById<TextView>(R.id.row_price)
             val changeView = row.findViewById<TextView>(R.id.row_change)

@@ -60,12 +60,20 @@
                 android:layout_marginTop="24dp"
                 android:visibility="gone" />
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="@string/tap_for_chart"
+                android:textColor="#99FFFFFF"
+                android:textSize="12sp" />
+
             <LinearLayout
                 android:id="@+id/quotes_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginTop="16dp" />
+                android:layout_marginTop="10dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/edit_button"

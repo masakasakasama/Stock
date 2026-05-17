@@ -24,5 +24,6 @@
     <string name="edit_watchlist">銘柄を編集</string>
     <string name="updated_at">最終更新 %1$s</string>
     <string name="version_format">バージョン %1$s (ビルド %2$d)</string>
+    <string name="tap_for_chart">銘柄をタップすると期間別チャートを表示します。</string>
     <string name="widget_howto">ホーム画面でウィジェットを追加するには: ホーム画面を長押し → ウィジェット → 「株価ウィジェット」を配置 → 銘柄を選択。\nアプリをアンインストールするには、アプリ一覧でこのアイコンを長押し → アンインストール。</string>
 </resources>
