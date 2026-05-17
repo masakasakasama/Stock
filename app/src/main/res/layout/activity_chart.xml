@@ -36,12 +36,20 @@
         android:layout_height="wrap_content"
         android:textSize="14sp" />
 
+    <TextView
+        android:id="@+id/chart_stats"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="#CCFFFFFF"
+        android:textSize="12sp" />
+
     <com.example.stockwidget.LineChartView
         android:id="@+id/chart_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="20dp" />
+        android:layout_marginTop="16dp" />
 
     <TextView
         android:id="@+id/chart_status"

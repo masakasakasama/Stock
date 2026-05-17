@@ -23,7 +23,8 @@ data class StockQuote(
             maximumFractionDigits = 2
             minimumFractionDigits = 2
         }
-        val unit = when (currency.uppercase(Locale.US)) {
+        // Indices (^N225, ^GSPC, …) are not a currency amount.
+        val unit = if (symbol.startsWith("^")) "" else when (currency.uppercase(Locale.US)) {
             "USD" -> "$"
             "JPY" -> "¥"
             "EUR" -> "€"

@@ -57,14 +57,20 @@ class StockWidgetProvider : AppWidgetProvider() {
                     val rv = baseViews(appCtx)
                     rv.removeAllViews(R.id.widget_rows)
                     if (quotes.isEmpty()) {
-                        rv.setViewVisibility(R.id.widget_status, View.VISIBLE)
                         rv.setTextViewText(
                             R.id.widget_status,
                             appCtx.getString(R.string.empty_hint)
                         )
                     } else {
-                        rv.setViewVisibility(R.id.widget_status, View.GONE)
-                        for (q in quotes) rv.addView(R.id.widget_rows, rowViews(appCtx, q))
+                        quotes.forEachIndexed { i, q ->
+                            rv.addView(R.id.widget_rows, rowViews(appCtx, q, i))
+                        }
+                        val time = android.text.format.DateFormat
+                            .format("HH:mm", System.currentTimeMillis())
+                        rv.setTextViewText(
+                            R.id.widget_status,
+                            appCtx.getString(R.string.updated_at, time)
+                        )
                     }
                     mgr.updateAppWidget(id, rv)
                 }
@@ -98,7 +104,7 @@ class StockWidgetProvider : AppWidgetProvider() {
         return rv
     }
 
-    private fun rowViews(context: Context, q: StockQuote): RemoteViews {
+    private fun rowViews(context: Context, q: StockQuote, index: Int): RemoteViews {
         val row = RemoteViews(context.packageName, R.layout.stock_widget_item)
         row.setTextViewText(R.id.item_symbol, q.symbol)
         if (q.error != null) {
@@ -115,6 +121,18 @@ class StockWidgetProvider : AppWidgetProvider() {
                 if (q.isUp) StockQuote.COLOR_UP else StockQuote.COLOR_DOWN
             )
         }
+        val chartIntent = Intent(context, ChartActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            .putExtra(ChartActivity.EXTRA_SYMBOL, q.symbol)
+            .putExtra(ChartActivity.EXTRA_NAME, q.shortName)
+            .setData(android.net.Uri.parse("stockwidget://${q.symbol}"))
+        val pi = PendingIntent.getActivity(
+            context,
+            100 + index,
+            chartIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        row.setOnClickPendingIntent(R.id.item_root, pi)
         return row
     }
 

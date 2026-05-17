@@ -19,6 +19,15 @@ object YahooFinanceClient {
     fun fetch(symbol: String): StockQuote {
         val trimmed = symbol.trim()
         if (trimmed.isEmpty()) return StockQuote.failed(symbol, "empty")
+        var last = fetchOnce(trimmed)
+        if (last.error != null) {
+            Thread.sleep(400)
+            last = fetchOnce(trimmed)
+        }
+        return last
+    }
+
+    private fun fetchOnce(trimmed: String): StockQuote {
         return try {
             val encoded = URLEncoder.encode(trimmed, "UTF-8")
             val url = URL("$BASE$encoded?range=1d&interval=1d")

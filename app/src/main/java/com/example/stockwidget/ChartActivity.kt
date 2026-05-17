@@ -89,7 +89,9 @@ class ChartActivity : AppCompatActivity() {
                 if (series.closes.size >= 2) {
                     binding.chartStatus.visibility = View.GONE
                     binding.chartView.setData(series.closes, series.times)
+                    showStats(series.closes)
                 } else {
+                    binding.chartStats.text = ""
                     binding.chartStatus.visibility = View.VISIBLE
                     binding.chartStatus.text = getString(
                         R.string.error_label,
@@ -98,6 +100,24 @@ class ChartActivity : AppCompatActivity() {
                 }
             }
         }.start()
+    }
+
+    private fun showStats(closes: List<Double>) {
+        val first = closes.first()
+        val last = closes.last()
+        val diff = last - first
+        val pct = if (first != 0.0) diff / first * 100.0 else 0.0
+        val hi = closes.maxOrNull() ?: last
+        val lo = closes.minOrNull() ?: last
+        val sign = if (diff >= 0) "+" else ""
+        binding.chartStats.text = java.lang.String.format(
+            java.util.Locale.US,
+            "期間: %s%.2f (%s%.2f%%)   高値 %,.2f   安値 %,.2f",
+            sign, diff, sign, pct, hi, lo
+        )
+        binding.chartStats.setTextColor(
+            if (diff >= 0) StockQuote.COLOR_UP else StockQuote.COLOR_DOWN
+        )
     }
 
     companion object {
