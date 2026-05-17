@@ -70,15 +70,12 @@
             android:textColor="#99FFFFFF"
             android:textSize="12sp" />
 
-        <TextView
-            android:id="@+id/outlook_text"
+        <LinearLayout
+            android:id="@+id/outlook_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:textIsSelectable="true"
-            android:lineSpacingMultiplier="1.2" />
+            android:orientation="vertical"
+            android:layout_marginTop="8dp" />
 
     </LinearLayout>
 
