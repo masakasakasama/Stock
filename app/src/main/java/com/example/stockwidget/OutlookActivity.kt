@@ -41,6 +41,13 @@ class OutlookActivity : AppCompatActivity() {
             Toast.makeText(this, R.string.api_key_saved, Toast.LENGTH_SHORT).show()
         }
         binding.generateButton.setOnClickListener { generate() }
+
+        // D: auto-generate once per day when a key is set.
+        val today = SimpleDateFormat("yyyy/MM/dd", Locale.JAPAN).format(Date())
+        val cachedDay = date.take(10)
+        if (StockPrefs.loadApiKey(this).isNotBlank() && cachedDay != today) {
+            binding.root.post { generate() }
+        }
     }
 
     private fun generate() {

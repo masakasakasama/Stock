@@ -83,12 +83,36 @@
                 android:text="@string/outlook_open" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/portfolio_button"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/portfolio_open" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/alerts_button"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/alerts_open" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/edit_button"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="@string/edit_watchlist" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/log_button"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/log_open" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/add_widget_button"

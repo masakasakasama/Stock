@@ -74,6 +74,15 @@ class MainActivity : AppCompatActivity() {
         binding.outlookButton.setOnClickListener {
             startActivity(Intent(this, OutlookActivity::class.java))
         }
+        binding.portfolioButton.setOnClickListener {
+            startActivity(Intent(this, PortfolioActivity::class.java))
+        }
+        binding.alertsButton.setOnClickListener {
+            startActivity(Intent(this, AlertsActivity::class.java))
+        }
+        binding.logButton.setOnClickListener {
+            startActivity(Intent(this, LogActivity::class.java))
+        }
         binding.editButton.setOnClickListener {
             startActivity(Intent(this, WatchlistEditActivity::class.java))
         }

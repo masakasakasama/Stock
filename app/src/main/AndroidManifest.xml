@@ -12,6 +12,7 @@
         android:protectionLevel="signature" />
 
     <application
+        android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -56,6 +57,21 @@
 
         <activity
             android:name=".OutlookActivity"
+            android:exported="false"
+            android:theme="@style/Theme.StockWidget" />
+
+        <activity
+            android:name=".LogActivity"
+            android:exported="false"
+            android:theme="@style/Theme.StockWidget" />
+
+        <activity
+            android:name=".AlertsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.StockWidget" />
+
+        <activity
+            android:name=".PortfolioActivity"
             android:exported="false"
             android:theme="@style/Theme.StockWidget" />
 

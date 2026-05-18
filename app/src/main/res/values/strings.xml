@@ -42,4 +42,35 @@
     <string name="diagnose_ok">診断OK: ウィジェットの描画に成功しました。ホーム画面に追加できます。</string>
     <string name="pin_unsupported">このランチャーは「追加」ボタンに対応していません。ホーム画面長押し→ウィジェットから追加してください。</string>
     <string name="widget_howto">ホーム画面でウィジェットを追加するには: ホーム画面を長押し → ウィジェット → 「株価ウィジェット」を配置 → 銘柄を選択。\nアプリをアンインストールするには、アプリ一覧でこのアイコンを長押し → アンインストール。</string>
+
+    <string name="log_open">エラーログ（診断）</string>
+    <string name="log_title">エラーログ</string>
+    <string name="log_clear">消去</string>
+    <string name="log_empty">記録されたエラーはありません。</string>
+
+    <string name="alerts_open">価格アラート</string>
+    <string name="alerts_title">価格アラート</string>
+    <string name="alerts_help">条件に達すると通知します（約30分ごとにバックグラウンドで確認）。</string>
+    <string name="alerts_symbol_hint">銘柄コード (例: 7203.T)</string>
+    <string name="alerts_value_hint">値（価格 または 変動%）</string>
+    <string name="alerts_above">以上で追加</string>
+    <string name="alerts_below">以下で追加</string>
+    <string name="alerts_pct">±%で追加</string>
+    <string name="alerts_invalid">銘柄コードと数値を入力してください</string>
+    <string name="alerts_empty">アラートはまだありません。</string>
+
+    <string name="search_hint">銘柄名で検索 (例: トヨタ, apple)</string>
+    <string name="search_button">検索</string>
+    <string name="searching">検索中…</string>
+    <string name="search_none">該当なし</string>
+    <string name="search_added">%1$s を追加しました</string>
+
+    <string name="portfolio_open">ポートフォリオ（損益）</string>
+    <string name="portfolio_title">ポートフォリオ</string>
+    <string name="pf_symbol">銘柄</string>
+    <string name="pf_shares">株数</string>
+    <string name="pf_cost">取得単価</string>
+    <string name="pf_add">保有を追加</string>
+    <string name="pf_invalid">銘柄・株数・取得単価を入力してください</string>
+    <string name="pf_empty">保有はまだありません。</string>
 </resources>

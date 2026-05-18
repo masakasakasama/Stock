@@ -63,4 +63,10 @@ object StockPrefs {
     fun loadOutlook(context: Context): Pair<String, String> =
         (prefs(context).getString(KEY_OUTLOOK, "") ?: "") to
             (prefs(context).getString(KEY_OUTLOOK_DATE, "") ?: "")
+
+    fun putString(context: Context, key: String, value: String) =
+        prefs(context).edit().putString(key, value).apply()
+
+    fun getString(context: Context, key: String): String =
+        prefs(context).getString(key, "") ?: ""
 }

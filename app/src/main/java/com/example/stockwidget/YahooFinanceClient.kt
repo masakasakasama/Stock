@@ -156,4 +156,46 @@ object YahooFinanceClient {
         }
         return Series(closes, times, currency)
     }
+
+    data class SearchHit(val symbol: String, val name: String, val exchange: String)
+
+    /** Search Yahoo Finance by name or ticker. Returns up to ~10 matches. */
+    fun search(query: String): List<SearchHit> {
+        val q = query.trim()
+        if (q.isEmpty()) return emptyList()
+        return try {
+            val encoded = URLEncoder.encode(q, "UTF-8")
+            val url = URL(
+                "https://query1.finance.yahoo.com/v1/finance/search" +
+                    "?q=$encoded&quotesCount=10&newsCount=0"
+            )
+            val conn = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 10_000
+                readTimeout = 10_000
+                setRequestProperty("User-Agent", UA)
+                setRequestProperty("Accept", "application/json")
+            }
+            try {
+                if (conn.responseCode != 200) return emptyList()
+                val body = conn.inputStream.bufferedReader().use { it.readText() }
+                val quotes = JSONObject(body).optJSONArray("quotes") ?: return emptyList()
+                val out = ArrayList<SearchHit>()
+                for (i in 0 until quotes.length()) {
+                    val o = quotes.optJSONObject(i) ?: continue
+                    val sym = o.optString("symbol")
+                    if (sym.isBlank()) continue
+                    val name = o.optString("shortname")
+                        .ifBlank { o.optString("longname") }
+                        .ifBlank { sym }
+                    out.add(SearchHit(sym, name, o.optString("exchDisp")))
+                }
+                out
+            } finally {
+                conn.disconnect()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 }
