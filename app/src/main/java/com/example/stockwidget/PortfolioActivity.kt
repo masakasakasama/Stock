@@ -63,20 +63,25 @@ class PortfolioActivity : AppCompatActivity() {
 
     private fun render(data: List<Pair<Holding, StockQuote>>) {
         val nf = NumberFormat.getNumberInstance(Locale.US).apply {
-            maximumFractionDigits = 0
+            maximumFractionDigits = 2
+            minimumFractionDigits = 0
         }
         var totalValue = 0.0
         var totalCost = 0.0
         binding.pfList.removeAllViews()
 
         data.forEachIndexed { index, (h, q) ->
-            val price = if (q.error == null) q.price else 0.0
-            val value = price * h.shares
+            val ok = q.error == null
+            val value = q.price * h.shares
             val cost = h.avgCost * h.shares
             val pl = value - cost
             val plPct = if (cost != 0.0) pl / cost * 100.0 else 0.0
-            totalValue += value
-            totalCost += cost
+            // Skip failed quotes from totals so a single fetch error
+            // doesn't make the aggregate P/L look catastrophically wrong.
+            if (ok) {
+                totalValue += value
+                totalCost += cost
+            }
 
             val card = LinearLayout(this)
             card.orientation = LinearLayout.VERTICAL
@@ -109,16 +114,20 @@ class PortfolioActivity : AppCompatActivity() {
             card.addView(top)
 
             val detail = TextView(this)
-            val sign = if (pl >= 0) "+" else ""
-            detail.text = if (q.error != null) {
-                "取得失敗"
+            if (!ok) {
+                detail.text = "取得失敗（合計には含めません）"
+                detail.setTextColor(0xFF99A3AF.toInt())
             } else {
-                "評価額 ${nf.format(value)}　損益 $sign${nf.format(pl)} ($sign%.2f%%)"
-                    .format(plPct)
+                val sign = if (pl >= 0) "+" else ""
+                detail.text = String.format(
+                    Locale.US,
+                    "評価額 %s　損益 %s%s (%s%.2f%%)",
+                    nf.format(value), sign, nf.format(pl), sign, plPct
+                )
+                detail.setTextColor(
+                    if (pl >= 0) StockQuote.COLOR_UP else StockQuote.COLOR_DOWN
+                )
             }
-            detail.setTextColor(
-                if (pl >= 0) StockQuote.COLOR_UP else StockQuote.COLOR_DOWN
-            )
             detail.setPadding(0, dp(6), 0, 0)
             card.addView(detail)
 
@@ -128,9 +137,11 @@ class PortfolioActivity : AppCompatActivity() {
         val tpl = totalValue - totalCost
         val tpct = if (totalCost != 0.0) tpl / totalCost * 100.0 else 0.0
         val s = if (tpl >= 0) "+" else ""
-        binding.pfTotal.text =
-            "合計 評価額 ${nf.format(totalValue)}　損益 $s${nf.format(tpl)} ($s%.2f%%)"
-                .format(tpct)
+        binding.pfTotal.text = String.format(
+            Locale.US,
+            "合計 評価額 %s　損益 %s%s (%s%.2f%%)",
+            nf.format(totalValue), s, nf.format(tpl), s, tpct
+        )
         binding.pfTotal.setTextColor(
             if (tpl >= 0) StockQuote.COLOR_UP else StockQuote.COLOR_DOWN
         )
