@@ -9,3 +9,10 @@
 .cxx
 local.properties
 app/build/
+
+# Sensitive signing material
+*.jks
+*.keystore
+*.p12
+*.pem
+*.env

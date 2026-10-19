@@ -7,6 +7,7 @@ import android.content.pm.PackageInstaller
 import android.os.Build
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.MessageDigest
 
 /**
  * Self-update from the public GitHub release. Every step broadcasts an
@@ -94,10 +95,26 @@ object AppUpdater {
 
         sendStatus(context, STATE_DOWNLOADING, "新版 (ビルド $latest) をダウンロード中…")
         val apkBytes = downloadBytes(APK_URL)
+        val expected = downloadText(APK_URL + ".sha256")
+            .trim().substringBefore(" ").lowercase()
+        if (!expected.matches(Regex("[a-f0-9]{64}"))) {
+            sendStatus(context, STATE_ERROR, "検証可能なSHA-256がないため更新を拒否")
+            return
+        }
+        val actual = MessageDigest.getInstance("SHA-256")
+            .digest(apkBytes)
+            .joinToString("") { "%02x".format(it) }
+        if (actual != expected) {
+            sendStatus(context, STATE_ERROR, "APKのSHA-256不一致。インストールを中止")
+            return
+        }
         if (apkBytes.isEmpty()) {
             sendStatus(context, STATE_ERROR, "ダウンロードに失敗しました")
             return
         }
+        val verified = java.io.File.createTempFile("update-verify", ".apk", context.cacheDir)
+        try { verified.writeBytes(apkBytes); ApkTrust.verify(context, verified, latest) }
+        finally { verified.delete() }
         sendStatus(context, STATE_INSTALLING, "インストール中…")
         installApk(context, apkBytes)
     }
@@ -109,7 +126,7 @@ object AppUpdater {
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             params.setRequireUserAction(
-                PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED
+                PackageInstaller.SessionParams.USER_ACTION_REQUIRED
             )
         }
 
@@ -132,6 +149,7 @@ object AppUpdater {
 
     private fun openConnection(spec: String): HttpURLConnection {
         var url = URL(spec)
+        require(url.protocol == "https" && url.host == "github.com")
         var redirects = 0
         while (true) {
             val conn = (url.openConnection() as HttpURLConnection).apply {
@@ -144,7 +162,13 @@ object AppUpdater {
             if (code in 300..399 && redirects < 5) {
                 val location = conn.getHeaderField("Location")
                 conn.disconnect()
-                url = URL(url, location)
+                val nextUrl = URL(url, location)
+                if (nextUrl.protocol != "https" ||
+                    nextUrl.host !in setOf("github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com")) {
+                    conn.disconnect()
+                    throw SecurityException("Untrusted GitHub release redirect")
+                }
+                url = nextUrl
                 redirects++
                 continue
             }

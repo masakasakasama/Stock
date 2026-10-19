@@ -48,11 +48,24 @@ object StockPrefs {
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    fun saveApiKey(context: Context, key: String) =
-        prefs(context).edit().putString(KEY_API, key.trim()).apply()
+    fun saveApiKey(context: Context, key: String) {
+        StockSecrets.save(context, key.trim())
+        check(prefs(context).edit().remove(KEY_API).commit())
+    }
 
-    fun loadApiKey(context: Context): String =
-        prefs(context).getString(KEY_API, "") ?: ""
+    fun loadApiKey(context: Context): String {
+        val legacy = prefs(context).getString(KEY_API, "").orEmpty()
+        if (legacy.isNotBlank()) {
+            // Remove old plaintext ONLY after the encrypted save and readback succeed.
+            return runCatching {
+                StockSecrets.save(context, legacy)
+                check(StockSecrets.load(context) == legacy)
+                check(prefs(context).edit().remove(KEY_API).commit())
+                legacy
+            }.getOrDefault(legacy)
+        }
+        return runCatching { StockSecrets.load(context) }.getOrDefault("")
+    }
 
     fun saveOutlook(context: Context, text: String, date: String) =
         prefs(context).edit()

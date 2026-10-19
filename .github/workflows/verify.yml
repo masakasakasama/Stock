@@ -16,4 +16,9 @@ jobs:
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
         with:
           packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
-      - run: ./gradlew :app:assembleDebug --no-daemon
+      - run: ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Verify legacy backup converter (no device required)
+        run: node --test scripts/legacy-adb-backup.test.mjs
