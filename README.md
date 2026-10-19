@@ -1,5 +1,8 @@
 # 株価ウィジェット (Stock Widget)
 
+> Security notice (2026-10-19): the old Android APK signing keystore was accidentally public. Automatic APK releases are paused while the signing certificate is rotated. Do not install APKs from untrusted sources. Existing installations need a backed-up migration and may require reinstall. See the security migration pull requests.
+
+
 Android のホーム画面ウィジェットで日本株・米国株の株価を表示するアプリです。
 Google Play には公開せず、自分の端末にインストール（サイドロード）して使う前提です。
 
