@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    if: false
+    if: ${{ vars.DATA_MIGRATION_VERIFIED == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -53,6 +53,17 @@ jobs:
             -PversionCode=${{ github.run_number }} \
             -PversionName=1.0.${{ github.run_number }}
 
+      - name: Verify APK signer against independently configured certificate
+        env:
+          EXPECTED_SIGNER: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          test "${#EXPECTED_SIGNER}" -eq 64
+          APK=app/build/outputs/apk/release/app-release.apk
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose --print-certs "$APK" > signer.txt
+          actual=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr 'A-F' 'a-f')
+          test "$actual" = "$EXPECTED_SIGNER" || { echo "::error::Unexpected APK signer"; exit 1; }
+
       - name: Collect release files
         run: |
           mkdir -p dist
@@ -73,9 +84,9 @@ jobs:
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
         with:
           tag_name: debug-latest
-          name: Latest debug build
+          name: Latest signed release
           body: |
-            自動ビルドされた最新のデバッグ APK です。
+            新しい秘密鍵で署名・検証された APK です。
             スマホでこのページを開き `stock-widget-debug.apk` をタップしてインストールしてください。
             （初回は「提供元不明のアプリ」許可と、Samsung Auto Blocker のオフが必要です）
           files: |

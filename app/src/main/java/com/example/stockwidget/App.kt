@@ -6,6 +6,7 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        com.example.stockwidget.backup.LocalBackup.recover(this)
 
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->

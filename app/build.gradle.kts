@@ -8,6 +8,8 @@ android {
     compileSdk = 34
 
     defaultConfig {
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        if (project.hasProperty("securityMigrationQa")) applicationIdSuffix = ".securityqa"
         applicationId = "com.example.stockwidget"
         minSdk = 24
         targetSdk = 34
@@ -46,6 +48,8 @@ android {
         }
     }
 
+    testOptions { unitTests.isIncludeAndroidResources = true }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -62,6 +66,10 @@ android {
 }
 
 dependencies {
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("junit:junit:4.13.2")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")

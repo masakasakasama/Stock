@@ -70,6 +70,7 @@ class MainActivity : AppCompatActivity() {
             BuildConfig.VERSION_CODE
         )
 
+        binding.backupButton.setOnClickListener { startActivity(Intent(this, com.example.stockwidget.backup.BackupActivity::class.java)) }
         binding.refreshButton.setOnClickListener { loadQuotes() }
         binding.outlookButton.setOnClickListener {
             startActivity(Intent(this, OutlookActivity::class.java))

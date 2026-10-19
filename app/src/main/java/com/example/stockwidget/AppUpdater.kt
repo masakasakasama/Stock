@@ -112,6 +112,9 @@ object AppUpdater {
             sendStatus(context, STATE_ERROR, "ダウンロードに失敗しました")
             return
         }
+        val verified = java.io.File.createTempFile("update-verify", ".apk", context.cacheDir)
+        try { verified.writeBytes(apkBytes); ApkTrust.verify(context, verified, latest) }
+        finally { verified.delete() }
         sendStatus(context, STATE_INSTALLING, "インストール中…")
         installApk(context, apkBytes)
     }
