@@ -33,23 +33,39 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build debug APK
-        run: >
-          ./gradlew assembleDebug --no-daemon --stacktrace
-          -PversionCode=${{ github.run_number }}
-          -PversionName=1.0.${{ github.run_number }}
+      - name: Build privately signed release APK
+        env:
+          SIGNING_KEYSTORE_B64: ${{ secrets.STOCK_SIGNING_KEYSTORE_B64 }}
+          ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.STOCK_SIGNING_STORE_PASSWORD }}
+          ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.STOCK_SIGNING_KEY_ALIAS }}
+          ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.STOCK_SIGNING_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for v in "$SIGNING_KEYSTORE_B64" "$ANDROID_SIGNING_STORE_PASSWORD" "$ANDROID_SIGNING_KEY_ALIAS" "$ANDROID_SIGNING_KEY_PASSWORD"; do
+            test -n "$v" || { echo "::error::Missing private signing secret; refusing to publish APK"; exit 1; }
+          done
+          export ANDROID_SIGNING_KEYSTORE_PATH="$RUNNER_TEMP/stock-private-signing.jks"
+          printf '%s' "$SIGNING_KEYSTORE_B64" | base64 --decode > "$ANDROID_SIGNING_KEYSTORE_PATH"
+          chmod 600 "$ANDROID_SIGNING_KEYSTORE_PATH"
+          trap 'rm -f "$ANDROID_SIGNING_KEYSTORE_PATH"' EXIT
+          ./gradlew assembleRelease --no-daemon --stacktrace \
+            -PversionCode=${{ github.run_number }} \
+            -PversionName=1.0.${{ github.run_number }}
 
       - name: Collect release files
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/stock-widget-debug.apk
+          cp app/build/outputs/apk/release/app-release.apk dist/stock-widget-debug.apk
+          (cd dist && sha256sum stock-widget-debug.apk > stock-widget-debug.apk.sha256)
           echo "${{ github.run_number }}" > dist/latest-version.txt
 
       - name: Upload as workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: stock-widget-debug-apk
-          path: dist/stock-widget-debug.apk
+          path: |
+            dist/stock-widget-debug.apk
+            dist/stock-widget-debug.apk.sha256
           if-no-files-found: error
 
       - name: Publish to Releases
@@ -64,5 +80,6 @@ jobs:
           files: |
             dist/stock-widget-debug.apk
             dist/latest-version.txt
+            dist/stock-widget-debug.apk.sha256
           prerelease: true
           make_latest: false

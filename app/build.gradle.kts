@@ -15,25 +15,30 @@ android {
         versionName = (project.findProperty("versionName") as String?) ?: "1.0"
     }
 
+    val signingPath = System.getenv("ANDROID_SIGNING_KEYSTORE_PATH")
+    val signingStorePassword = System.getenv("ANDROID_SIGNING_STORE_PASSWORD")
+    val signingKeyAlias = System.getenv("ANDROID_SIGNING_KEY_ALIAS")
+    val signingKeyPassword = System.getenv("ANDROID_SIGNING_KEY_PASSWORD")
+    val hasSigning = listOf(signingPath, signingStorePassword, signingKeyAlias, signingKeyPassword)
+        .all { !it.isNullOrBlank() }
     signingConfigs {
-        // Fixed key checked into the repo so every CI build is signed
-        // identically and updates install over the previous version.
-        // This is a throwaway key for personal sideloading only.
-        create("shared") {
-            storeFile = file("keystore/shared-debug.jks")
-            storePassword = "stockwidget"
-            keyAlias = "stockwidget"
-            keyPassword = "stockwidget"
+        create("release") {
+            if (hasSigning) {
+                storeFile = file(signingPath!!)
+                storePassword = signingStorePassword
+                keyAlias = signingKeyAlias
+                keyPassword = signingKeyPassword
+            }
         }
     }
 
     buildTypes {
         debug {
-            signingConfig = signingConfigs.getByName("shared")
+            // Keep default local debug signing; never publish debug builds.
         }
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("shared")
+            if (hasSigning) signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
